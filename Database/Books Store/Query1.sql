@@ -1,12 +1,12 @@
 -- Посчитать количество "смешанных" заказов за день
-
+-- Type count
 SELECT COUNT(*)
 FROM "order" ord
 JOIN (SELECT oo.order_id, COUNT(oo.order_id) as cnt
 	  FROM order_info oo 
 	  JOIN (SELECT bk."id" 
 			FROM book bk 
-			WHERE bk."id"=2 OR bk."id"=5) bk ON bk."id" = oo.book_id
+			WHERE bk."type_id"=2) bk ON bk."id" = oo.book_id
 	  GROUP BY oo.order_id
 	  HAVING (COUNT(oo.order_id) != (SELECT COUNT(oi.order_id) 
 									 FROM order_info oi 
