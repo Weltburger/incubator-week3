@@ -1,0 +1,1 @@
+module "binance-web-socket"
