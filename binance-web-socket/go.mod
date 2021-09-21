@@ -1,1 +1,5 @@
-module "binance-web-socket"
+module binance-web-socket
+
+go 1.16
+
+require github.com/gorilla/websocket v1.4.2
