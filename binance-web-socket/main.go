@@ -8,7 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Trade struct {
@@ -55,7 +57,14 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 			if err := json.Unmarshal(message, &data); err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(data)
+			if data.E == "" {
+				continue
+			}
+			tm := strconv.Itoa(data.T)
+			s, _ := strconv.ParseInt(tm[:10], 10, 64)
+			ns, _ := strconv.ParseInt(tm[10:], 10, 64)
+
+			fmt.Println(data, time.Unix(s, ns))
 		}
 	}(ws)
 	
