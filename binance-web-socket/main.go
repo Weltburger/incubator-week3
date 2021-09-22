@@ -1,6 +1,9 @@
 package main
 
 import (
+	"binance-web-socket/models"
+	"binance-web-socket/storage"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -12,25 +15,6 @@ import (
 	"strings"
 	"time"
 )
-
-type Trade struct {
-	E  string `json:"e"`
-	E1 int    `json:"E"`
-	S  string `json:"s"`
-	A  int    `json:"a"`
-	P  string `json:"p"`
-	Q  string `json:"q"`
-	F  int    `json:"f"`
-	L  int    `json:"l"`
-	T  int    `json:"T"`
-	M  bool   `json:"m"`
-}
-
-type Request struct {
-	Method string    `json:"method"`
-	Params [1]string `json:"params"`
-	ID     int       `json:"id"`
-}
 
 var upgrader = websocket.Upgrader{}
 
@@ -45,7 +29,7 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 		log.Fatal(err)
 	}
 
-	data := new(Trade)
+	data := new(models.Trade)
 	go func(ws *websocket.Conn) {
 		for {
 			_, message, readErr := ws.ReadMessage()
@@ -57,12 +41,15 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 			if err := json.Unmarshal(message, &data); err != nil {
 				log.Fatal(err)
 			}
-			if data.E == "" {
+			if data.EventType == "" {
 				continue
 			}
-			tm := strconv.Itoa(data.T)
+			tm := strconv.Itoa(data.TradeTime)
 			s, _ := strconv.ParseInt(tm[:10], 10, 64)
 			ns, _ := strconv.ParseInt(tm[10:], 10, 64)
+
+			ctx := context.Background()
+			db.CityRepository().AddTrade(ctx, data)
 
 			fmt.Println(data, time.Unix(s, ns))
 		}
@@ -81,13 +68,13 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 			params := strings.Split(string(mes), " ")
 			if len(params) > 1 {
 				if params[0] == "SUBSCRIBE" {
-					newRequest := Request{params[0], [1]string{params[1]+"@trade"}, 1 }
+					newRequest := models.Request{params[0], [1]string{params[1]+"@trade"}, 1 }
 					err = ws.WriteJSON(newRequest)
 					if err != nil {
 						log.Fatal(err)
 					}
 				} else if params[0] == "UNSUBSCRIBE"{
-					newRequest := Request{params[0], [1]string{params[1]+"@trade"}, 312}
+					newRequest := models.Request{params[0], [1]string{params[1]+"@trade"}, 312}
 					err = ws.WriteJSON(newRequest)
 					if err != nil {
 						log.Fatal(err)
@@ -114,7 +101,12 @@ func stopper(writer http.ResponseWriter, request *http.Request) {
 	os.Exit(1)
 }
 
+var db = new(storage.Database)
+
 func main() {
+	db.StartDB()
+	defer db.CloseDB()
+
 	http.HandleFunc("/ws", handler)
 	http.HandleFunc("/stop", stopper)
 
