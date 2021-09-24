@@ -16,16 +16,23 @@ import (
 	"time"
 )
 
-var upgrader = websocket.Upgrader{}
-var DB = new(storage.Database)
+var (
+	UPGRADER    = websocket.Upgrader{}
+	DB          = new(storage.Database)
+	STOP        = "stop"
+	BINANCEWS   = "wss://stream.binance.com:9443/ws"
+	SUBSCRIBE   = "SUBSCRIBE"
+	UNSUBSCRIBE = "UNSUBSCRIBE"
+	TRADE       = "@trade"
+)
 
 func Handler(writer http.ResponseWriter, request *http.Request) {
-	var conn, err = upgrader.Upgrade(writer, request, nil)
+	var conn, err = UPGRADER.Upgrade(writer, request, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ws, _, err := websocket.DefaultDialer.Dial("wss://stream.binance.com:9443/ws", nil)
+	ws, _, err := websocket.DefaultDialer.Dial(BINANCEWS, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,7 +46,7 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 				return
 			}
 
-			if err := json.Unmarshal(message, &data); err != nil {
+			if err := json.Unmarshal(message, data); err != nil {
 				log.Fatal(err)
 			}
 			if data.EventType == "" {
@@ -62,20 +69,20 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			if strings.ToLower(string(mes)) == "stop" {
+			if strings.ToLower(string(mes)) == STOP {
 				os.Exit(1)
 			}
 
 			params := strings.Split(string(mes), " ")
 			if len(params) > 1 {
-				if params[0] == "SUBSCRIBE" {
-					newRequest := models.Request{params[0], [1]string{params[1]+"@trade"}, 1 }
+				if params[0] == SUBSCRIBE {
+					newRequest := models.Request{Method: params[0], Params: [1]string{params[1] + TRADE}, ID: 1}
 					err = ws.WriteJSON(newRequest)
 					if err != nil {
 						log.Fatal(err)
 					}
-				} else if params[0] == "UNSUBSCRIBE"{
-					newRequest := models.Request{params[0], [1]string{params[1]+"@trade"}, 312}
+				} else if params[0] == UNSUBSCRIBE {
+					newRequest := models.Request{Method: params[0], Params: [1]string{params[1] + TRADE}, ID: 312}
 					err = ws.WriteJSON(newRequest)
 					if err != nil {
 						log.Fatal(err)
