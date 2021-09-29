@@ -2,16 +2,18 @@ package storage
 
 import (
 	"database/sql"
-	_ "github.com/lib/pq"
+	_ "github.com/mailru/go-clickhouse"
 	"log"
 )
 
 type Database struct {
-	db *sql.DB
+	DB            *sql.DB
+	Tx            *sql.Tx
+	Stmt          *sql.Stmt
 	tradesStorage *TradesStorage
 }
 
-func (database *Database) CityRepository() *TradesStorage {
+func (database *Database) TradesRepository() *TradesStorage {
 	if database.tradesStorage != nil {
 		return database.tradesStorage
 	}
@@ -22,7 +24,7 @@ func (database *Database) CityRepository() *TradesStorage {
 }
 
 func (database *Database) StartDB() {
-	db, err := sql.Open("postgres", "postgres://postgres:1234@localhost:5432/trades?sslmode=disable")
+	db, err := sql.Open("clickhouse", "http://localhost:8123/trade?&debug=true")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,9 +34,9 @@ func (database *Database) StartDB() {
 		log.Fatal(err)
 	}
 
-	database.db = db
+	database.DB = db
 }
 
 func (database *Database) CloseDB()  {
-	database.db.Close()
+	database.DB.Close()
 }

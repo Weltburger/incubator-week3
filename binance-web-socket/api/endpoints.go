@@ -3,7 +3,6 @@ package api
 import (
 	"binance-web-socket/models"
 	"binance-web-socket/storage"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
@@ -11,9 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 )
 
 var (
@@ -39,7 +36,14 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 
 	data := new(models.Trade)
 	go func(ws *websocket.Conn) {
-		for {
+		DB.Tx, err = DB.DB.Begin()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		DB.Stmt = DB.TradesRepository().Prepare()
+
+		for i := 0; ; i++ {
 			_, message, readErr := ws.ReadMessage()
 			if readErr != nil {
 				fmt.Println(readErr)
@@ -52,14 +56,13 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 			if data.EventType == "" {
 				continue
 			}
-			tm := strconv.Itoa(data.TradeTime)
-			s, _ := strconv.ParseInt(tm[:10], 10, 64)
-			ns, _ := strconv.ParseInt(tm[10:], 10, 64)
 
-			ctx := context.Background()
-			DB.CityRepository().AddTrade(ctx, data)
+			DB.TradesRepository().Exc(data)
 
-			fmt.Println(data, time.Unix(s, ns))
+			if i == 50 {
+				i = 0
+				DB.TradesRepository().Cmt()
+			}
 		}
 	}(ws)
 

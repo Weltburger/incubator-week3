@@ -2,7 +2,8 @@ package storage
 
 import (
 	"binance-web-socket/models"
-	"context"
+	"database/sql"
+	"github.com/google/uuid"
 	"log"
 	"strconv"
 	"time"
@@ -12,31 +13,62 @@ type TradesStorage struct {
 	database *Database
 }
 
-func (tradesStorage *TradesStorage) AddTrade(ctx context.Context, trade *models.Trade) {
-	etm := strconv.Itoa(trade.EventTime)
+func (tradesStorage *TradesStorage) Prepare() *sql.Stmt {
+	st, err := tradesStorage.database.Tx.Prepare(`
+		INSERT INTO trade.trades (
+			uuid, 
+			event_type, 
+			event_time, 
+			symbol, 
+			TradeID, 
+			Price, 
+			Quantity, 
+			FirstTradeID, 
+			LastTradeID, 
+			TradeTime, 
+			MarketMaker
+		) VALUES (
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+		)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return st
+}
+
+func (tradesStorage *TradesStorage) Exc(data *models.Trade) {
+	etm := strconv.Itoa(data.EventTime)
 	s, _ := strconv.ParseInt(etm[:10], 10, 64)
 	ns, _ := strconv.ParseInt(etm[10:], 10, 64)
 	eventTime := time.Unix(s, ns)
-	ttm := strconv.Itoa(trade.TradeTime)
+	ttm := strconv.Itoa(data.TradeTime)
 	s, _ = strconv.ParseInt(ttm[:10], 10, 64)
 	ns, _ = strconv.ParseInt(ttm[10:], 10, 64)
 	tradeTime := time.Unix(s, ns)
 
-	_, err := tradesStorage.database.db.ExecContext(ctx,
-		`INSERT INTO "public"."trades" (type, event_time, symbol, trade_id, price, quantity, first_trade_id, last_trade_id, trade_time, market_maker) 
-			   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-		trade.EventType,
+	if _, err := tradesStorage.database.Stmt.Exec(
+		uuid.New(),
+		data.EventType,
 		eventTime,
-		trade.Symbol,
-		trade.TradeID,
-		trade.Price,
-		trade.Quantity,
-		trade.FirstTradeID,
-		trade.LastTradeID,
+		data.Symbol,
+		data.TradeID,
+		data.Price,
+		data.Quantity,
+		data.FirstTradeID,
+		data.LastTradeID,
 		tradeTime,
-		trade.MarketMaker,
-	)
-	if err != nil {
+		data.MarketMaker,
+	); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (tradesStorage *TradesStorage) Cmt() {
+	if err := tradesStorage.database.Tx.Commit(); err != nil {
+		log.Fatal(err)
+	}
+	tradesStorage.database.Tx, _ = tradesStorage.database.DB.Begin()
+	tradesStorage.database.Stmt = tradesStorage.Prepare()
 }
