@@ -1,15 +1,13 @@
 package storage
 
 import (
-	"database/sql"
+	"fmt"
+	"github.com/go-redis/redis"
 	_ "github.com/mailru/go-clickhouse"
-	"log"
 )
 
 type Database struct {
-	DB            *sql.DB
-	Tx            *sql.Tx
-	Stmt          *sql.Stmt
+	DB            *redis.Client
 	tradesStorage *TradesStorage
 }
 
@@ -24,17 +22,16 @@ func (database *Database) TradesRepository() *TradesStorage {
 }
 
 func (database *Database) StartDB() {
-	db, err := sql.Open("clickhouse", "http://localhost:8123/trade?&debug=true")
-	if err != nil {
-		log.Fatal(err)
-	}
+	client := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		Password: "",
+		DB: 0,
+	})
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
+	pong, err := client.Ping().Result()
+	fmt.Println(pong, err)
 
-	database.DB = db
+	database.DB = client
 }
 
 func (database *Database) CloseDB()  {

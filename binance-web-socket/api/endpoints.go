@@ -36,13 +36,6 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 
 	data := new(models.Trade)
 	go func(ws *websocket.Conn) {
-		DB.Tx, err = DB.DB.Begin()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		DB.Stmt = DB.TradesRepository().Prepare()
-
 		for i := 0; ; i++ {
 			_, message, readErr := ws.ReadMessage()
 			if readErr != nil {
@@ -57,12 +50,8 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 				continue
 			}
 
-			DB.TradesRepository().Exc(data)
-
-			if i == 50 {
-				i = 0
-				DB.TradesRepository().Cmt()
-			}
+			DB.TradesRepository().Set(message)
+			fmt.Println(data)
 		}
 	}(ws)
 
