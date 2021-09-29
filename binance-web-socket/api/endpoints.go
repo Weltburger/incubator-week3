@@ -57,7 +57,7 @@ func Handler(writer http.ResponseWriter, request *http.Request) {
 			ns, _ := strconv.ParseInt(tm[10:], 10, 64)
 
 			ctx := context.Background()
-			DB.CityRepository().AddTrade(ctx, data)
+			DB.TradesRepository().AddTrade(ctx, data)
 
 			fmt.Println(data, time.Unix(s, ns))
 		}

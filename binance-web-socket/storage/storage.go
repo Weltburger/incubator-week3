@@ -11,7 +11,7 @@ type Database struct {
 	tradesStorage *TradesStorage
 }
 
-func (database *Database) CityRepository() *TradesStorage {
+func (database *Database) TradesRepository() *TradesStorage {
 	if database.tradesStorage != nil {
 		return database.tradesStorage
 	}
