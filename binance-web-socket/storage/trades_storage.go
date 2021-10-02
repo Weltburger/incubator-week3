@@ -20,13 +20,13 @@ func (tradesStorage *TradesStorage) Prepare() *sql.Stmt {
 			event_type, 
 			event_time, 
 			symbol, 
-			TradeID, 
-			Price, 
-			Quantity, 
-			FirstTradeID, 
-			LastTradeID, 
-			TradeTime, 
-			MarketMaker
+			trade_id, 
+			price, 
+			quantity, 
+			first_trade_id, 
+			last_trade_id, 
+			trade_time, 
+			market_maker
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)`)
