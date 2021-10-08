@@ -26,9 +26,10 @@ func (tradesStorage *TradesStorage) Prepare() *sql.Stmt {
 			first_trade_id, 
 			last_trade_id, 
 			trade_time, 
-			market_maker
+			market_maker,
+		    ignore
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)`)
 
 	if err != nil {
@@ -56,10 +57,11 @@ func (tradesStorage *TradesStorage) Exc(data *models.Trade) {
 		data.TradeID,
 		data.Price,
 		data.Quantity,
-		data.FirstTradeID,
-		data.LastTradeID,
+		data.BuyerOrderID,
+		data.SellerOrderID,
 		tradeTime,
 		data.MarketMaker,
+		data.Ignore,
 	); err != nil {
 		log.Fatal(err)
 	}

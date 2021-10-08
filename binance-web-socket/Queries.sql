@@ -1,33 +1,35 @@
 CREATE TABLE IF NOT EXISTS trade.trades (
-    uuid         UUID,
-    event_type   String,
-    event_time   DateTime,
-    symbol       String,
-    trade_id      UInt64,
-    price        String,
-    quantity     String,
-    first_trade_id UInt64,
-    last_trade_id  UInt64,
-    trade_time    DateTime,
-    market_maker  UInt8
+    uuid            UUID,
+    event_type      String,
+    event_time      DateTime,
+    symbol          String,
+    trade_id        UInt64,
+    price           String,
+    quantity        String,
+    buyer_order_id  UInt64,
+    seller_order_id UInt64,
+    trade_time      DateTime,
+    market_maker    UInt8,
+    ignore          UInt8
 ) engine = MergeTree()
-PARTITION BY toYYYYMMDD(event_time)
-order by  (event_type, symbol)
+      PARTITION BY toYYYYMMDD(event_time)
+      order by  (event_type, symbol)
 
 -------------------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS trade.trades_rep (
-    uuid         UUID,
-    event_type   String,
-    event_time   DateTime,
-    symbol       String,
-    trade_id      UInt64,
-    price        String,
-    quantity     String,
-    first_trade_id UInt64,
-    last_trade_id  UInt64,
-    trade_time    DateTime,
-    market_maker  UInt8
+    uuid            UUID,
+    event_type      String,
+    event_time      DateTime,
+    symbol          String,
+    trade_id        UInt64,
+    price           String,
+    quantity        String,
+    buyer_order_id  UInt64,
+    seller_order_id UInt64,
+    trade_time      DateTime,
+    market_maker    UInt8,
+    ignore          UInt8
 ) engine = ReplacingMergeTree()
 PARTITION BY toYYYYMMDD(event_time)
 order by  (trade_id)
@@ -38,17 +40,18 @@ SETTINGS index_granularity=262144,
 -------------------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS trade.trades_sum (
-    uuid         UUID,
-    event_type   String,
-    event_time   DateTime,
-    symbol       String,
-    trade_id      UInt64,
-    price        String,
-    quantity     String,
-    first_trade_id UInt64,
-    last_trade_id  UInt64,
-    trade_time    DateTime,
-    market_maker  UInt8
+    uuid            UUID,
+    event_type      String,
+    event_time      DateTime,
+    symbol          String,
+    trade_id        UInt64,
+    price           String,
+    quantity        String,
+    buyer_order_id  UInt64,
+    seller_order_id UInt64,
+    trade_time      DateTime,
+    market_maker    UInt8,
+    ignore          UInt8
 ) engine = SummingMergeTree()
       PARTITION BY toYYYYMMDD(event_time)
       order by  (trade_id)
@@ -59,17 +62,18 @@ CREATE TABLE IF NOT EXISTS trade.trades_sum (
 -------------------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS trade.trades_agg (
-    uuid         UUID,
-    event_type   String,
-    event_time   DateTime,
-    symbol       String,
-    trade_id      UInt64,
-    price        String,
-    quantity     String,
-    first_trade_id UInt64,
-    last_trade_id  UInt64,
-    trade_time    DateTime,
-    market_maker  UInt8
+    uuid            UUID,
+    event_type      String,
+    event_time      DateTime,
+    symbol          String,
+    trade_id        UInt64,
+    price           String,
+    quantity        String,
+    buyer_order_id  UInt64,
+    seller_order_id UInt64,
+    trade_time      DateTime,
+    market_maker    UInt8,
+    ignore          UInt8
 ) engine = AggregatingMergeTree()
       PARTITION BY toYYYYMMDD(event_time)
       order by  (trade_id)
