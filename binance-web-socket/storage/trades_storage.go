@@ -23,18 +23,19 @@ func (tradesStorage *TradesStorage) AddTrade(ctx context.Context, trade *models.
 	tradeTime := time.Unix(s, ns)
 
 	_, err := tradesStorage.database.db.ExecContext(ctx,
-		`INSERT INTO "public"."trades" (type, event_time, symbol, trade_id, price, quantity, first_trade_id, last_trade_id, trade_time, market_maker) 
-			   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		`INSERT INTO "public"."trades" (type, event_time, symbol, trade_id, price, quantity, buyer_order_id, seller_order_id, trade_time, market_maker, ignore) 
+			   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		trade.EventType,
 		eventTime,
 		trade.Symbol,
 		trade.TradeID,
 		trade.Price,
 		trade.Quantity,
-		trade.FirstTradeID,
-		trade.LastTradeID,
+		trade.BuyerOrderID,
+		trade.SellerOrderID,
 		tradeTime,
 		trade.MarketMaker,
+		trade.Ignore,
 	)
 	if err != nil {
 		log.Fatal(err)
